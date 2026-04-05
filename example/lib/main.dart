@@ -1,26 +1,18 @@
+import 'package:face_attendance_sdk_example/ui/role_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:face_attendance_sdk/face_attendance_sdk.dart';
 
 import 'core/attendance_store.dart';
-import 'ui/dashboard_tab.dart';
 import 'ui/enrollment_tab.dart';
 import 'ui/attendance_tab.dart';
-
-import 'ui/role_selection_screen.dart';
-import 'core/models.dart';
+import 'ui/logs_tab.dart';
 
 void main() async {
-  print('App starting: main()...');
   WidgetsFlutterBinding.ensureInitialized();
-  
   final store = AttendanceStore();
-  print('Loading campus data storage...');
-  await store.loadData().timeout(const Duration(seconds: 3), onTimeout: () {
-    print('Storage load timed out, proceeding with fresh data.');
-  });
+  await store.loadData().timeout(const Duration(seconds: 3), onTimeout: () {});
 
-  print('Launching Campus App...');
   runApp(
     ChangeNotifierProvider.value(
       value: store,
@@ -35,13 +27,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'College Facial Attendance',
+      title: 'Face Attendance Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue.shade900,
-          primary: Colors.blue.shade900,
-          secondary: Colors.indigo,
+          seedColor: Colors.indigo,
+          primary: Colors.indigo.shade800,
+          secondary: Colors.blueAccent,
         ),
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
@@ -83,16 +75,11 @@ class _MainDashboardState extends State<MainDashboard> {
   }
 
   Future<void> _initializeInitialEngines() async {
-    print('Initializing AI Engines: Detector & Recognizer...');
     try {
-      await _detector.initialize().timeout(const Duration(seconds: 15), onTimeout: () {
-        print('Detector initialization timed out.');
-      });
-      await _recognizer.initialize().timeout(const Duration(seconds: 5), onTimeout: () {
-        print('Recognizer initialization timed out.');
-      });
+      await _detector.initialize().timeout(const Duration(seconds: 15), onTimeout: () {});
+      await _recognizer.initialize().timeout(const Duration(seconds: 5), onTimeout: () {});
     } catch (e) {
-      print('Engine initialization failed: $e');
+      debugPrint('Engine initialization failed: $e');
     }
     
     if (mounted) {
@@ -100,7 +87,6 @@ class _MainDashboardState extends State<MainDashboard> {
         _isInitialized = true;
       });
     }
-    print('AI Engines initialization complete.');
   }
 
   @override
@@ -113,53 +99,38 @@ class _MainDashboardState extends State<MainDashboard> {
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text('Initializing Campus AI Systems...', style: TextStyle(color: Colors.blue.shade900, fontWeight: FontWeight.bold)),
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Initializing AI Engines...', style: TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
         ),
       );
     }
 
-    final store = context.watch<AttendanceStore>();
-    final isFaculty = store.appContextRole == UserRole.faculty;
-
-    // Build tabs based on role
-    final List<Widget> tabs = isFaculty 
-      ? [const DashboardTab(), AttendanceTab(detector: _detector, recognizer: _recognizer), EnrollmentTab(detector: _detector, recognizer: _recognizer)]
-      : [EnrollmentTab(detector: _detector, recognizer: _recognizer), AttendanceTab(detector: _detector, recognizer: _recognizer)];
-
-    final List<BottomNavigationBarItem> navItems = isFaculty 
-      ? const [
-          BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.camera_front), label: 'Roll Call'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_add), label: 'Enrollment'),
-        ]
-      : const [
-          BottomNavigationBarItem(icon: Icon(Icons.person_add), label: 'Enrollment'),
-          BottomNavigationBarItem(icon: Icon(Icons.camera_front), label: 'Roll Call'),
-        ];
+    final tabs = [
+       EnrollmentTab(detector: _detector, recognizer: _recognizer),
+       AttendanceTab(detector: _detector, recognizer: _recognizer),
+       const LogsTab(),
+    ];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          isFaculty ? 'FACULTY COMMAND CENTER' : 'CLASSROOM TERMINAL',
-          style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 16),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.switch_account),
-          onPressed: () => store.setAppContextRole(null),
+        title: const Text(
+          'FACE ATTENDANCE SDK',
+          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2, fontSize: 16),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => store.clearData(),
+            icon: const Icon(Icons.delete_sweep_outlined, color: Colors.grey),
+            onPressed: () {
+               context.read<AttendanceStore>().clearData();
+            },
           ),
         ],
       ),
@@ -168,24 +139,26 @@ class _MainDashboardState extends State<MainDashboard> {
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: const [
-             BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 5)),
-          ],
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(25),
           child: BottomNavigationBar(
             currentIndex: _selectedIndex,
             onTap: (index) => setState(() => _selectedIndex = index),
             backgroundColor: Colors.white,
-            selectedItemColor: Colors.blue.shade900,
+            selectedItemColor: Colors.indigo.shade800,
             unselectedItemColor: Colors.grey.shade400,
             showSelectedLabels: true,
             showUnselectedLabels: false,
             elevation: 0,
             type: BottomNavigationBarType.fixed,
-            items: navItems,
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.person_add_outlined), label: 'Register'),
+              BottomNavigationBarItem(icon: Icon(Icons.camera_front_outlined), label: 'Scanner'),
+              BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Logs'),
+            ],
           ),
         ),
       ),

@@ -15,16 +15,16 @@ class RoleSelectionScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.blue.shade900, Colors.indigo.shade800],
+            colors: [Colors.indigo.shade900, Colors.blue.shade800],
           ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.account_balance, size: 80, color: Colors.white),
+            const Icon(Icons.face_unlock_outlined, size: 80, color: Colors.white),
             const SizedBox(height: 20),
             const Text(
-              'CAMPUS ATTENDANCE',
+              'BIOMETRIC SDK',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 28,
@@ -34,27 +34,17 @@ class RoleSelectionScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             const Text(
-              'Select your access level to continue',
+              'Face Attendance & Registration System',
               style: TextStyle(color: Colors.white70, fontSize: 16),
             ),
             const SizedBox(height: 60),
             
-            _buildRoleCard(
+            _buildActionCard(
               context,
-              title: 'Faculty Dashboard',
-              subtitle: 'Analytics, Reports & Management',
-              icon: Icons.analytics_outlined,
-              role: UserRole.faculty,
-            ),
-            
-            const SizedBox(height: 20),
-            
-            _buildRoleCard(
-              context,
-              title: 'Classroom Terminal',
-              subtitle: 'Enrollment & Daily Roll Call',
-              icon: Icons.camera_front_outlined,
-              role: UserRole.student, // Mapping terminal to student role for UI filtering
+              title: 'Enter Dashboard',
+              subtitle: 'Access Logs, Scanning & Register',
+              icon: Icons.dashboard_outlined,
+              role: UserRole.user,
             ),
           ],
         ),
@@ -62,7 +52,7 @@ class RoleSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRoleCard(BuildContext context, {
+  Widget _buildActionCard(BuildContext context, {
     required String title,
     required String subtitle,
     required IconData icon,

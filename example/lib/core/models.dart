@@ -1,5 +1,6 @@
+import 'dart:convert';
 
-enum UserRole { student, faculty, staff, visitor }
+enum UserRole { student, faculty, staff, visitor, user }
 
 class AppUser {
   final String id;
@@ -12,8 +13,8 @@ class AppUser {
   AppUser({
     required this.id,
     required this.name,
-    required this.department,
-    required this.role,
+    this.department = 'General',
+    this.role = UserRole.user,
     required this.embedding,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
@@ -30,7 +31,7 @@ class AppUser {
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
         id: json['id'],
         name: json['name'],
-        department: json['department'],
+        department: json['department'] ?? 'General',
         role: UserRole.values[json['role']],
         embedding: List<double>.from(json['embedding']),
         createdAt: DateTime.parse(json['createdAt']),
@@ -65,7 +66,7 @@ class AttendanceRecord {
   factory AttendanceRecord.fromJson(Map<String, dynamic> json) => AttendanceRecord(
         userId: json['userId'],
         userName: json['userName'],
-        userRole: UserRole.values[json['userRole']],
+        userRole: UserRole.values[json['role'] ?? 0], // Compatibility fix
         timestamp: DateTime.parse(json['timestamp']),
         type: AttendanceType.values[json['type']],
       );
