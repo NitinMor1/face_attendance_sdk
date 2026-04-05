@@ -1,4 +1,3 @@
-import '../models/face_data.dart';
 import 'recognizer_interface.dart';
 
 FaceRecognizerInterface createRecognizer() => throw UnsupportedError(

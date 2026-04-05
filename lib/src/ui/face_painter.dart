@@ -57,21 +57,6 @@ class FacePainter extends CustomPainter {
     }
   }
 
-  void _drawCorners(Canvas canvas, Rect rect, Paint paint) {
-    const double len = 20.0;
-    // Top Left
-    canvas.drawLine(Offset(rect.left, rect.top), Offset(rect.left + len, rect.top), paint);
-    canvas.drawLine(Offset(rect.left, rect.top), Offset(rect.left, rect.top + len), paint);
-    // Top Right
-    canvas.drawLine(Offset(rect.right, rect.top), Offset(rect.right - len, rect.top), paint);
-    canvas.drawLine(Offset(rect.right, rect.top), Offset(rect.right, rect.top + len), paint);
-    // Bottom Left
-    canvas.drawLine(Offset(rect.left, rect.bottom), Offset(rect.left + len, rect.bottom), paint);
-    canvas.drawLine(Offset(rect.left, rect.bottom), Offset(rect.left, rect.bottom - len), paint);
-    // Bottom Right
-    canvas.drawLine(Offset(rect.right, rect.bottom), Offset(rect.right - len, rect.bottom), paint);
-    canvas.drawLine(Offset(rect.right, rect.bottom), Offset(rect.right, rect.bottom - len), paint);
-  }
 
   Offset _transformPoint(Offset point, Size size, double scaleX, double scaleY) {
     if (kIsWeb) {

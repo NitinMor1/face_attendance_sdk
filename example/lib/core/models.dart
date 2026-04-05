@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 enum UserRole { student, faculty, staff, visitor }
 
@@ -17,7 +16,7 @@ class AppUser {
     required this.role,
     required this.embedding,
     DateTime? createdAt,
-  }) : this.createdAt = createdAt ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now();
 
   Map<String, dynamic> toJson() => {
         'id': id,

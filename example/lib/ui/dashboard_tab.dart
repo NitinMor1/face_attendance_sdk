@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../core/attendance_store.dart';
-import '../core/models.dart';
 
 class DashboardTab extends StatelessWidget {
   const DashboardTab({super.key});
@@ -187,7 +186,7 @@ class DashboardTab extends StatelessWidget {
                 ),
               ],
             ),
-          )).toList(),
+          )),
       ],
     );
   }
@@ -268,7 +267,7 @@ class DashboardTab extends StatelessWidget {
           ...atRisk.take(2).map((s) => Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: Text('• ${s.name} (Roll No: ${s.id}) is below 75% attendance.', style: const TextStyle(fontSize: 13)),
-          )).toList(),
+          )),
           if (atRisk.length > 2)
             const Padding(
               padding: EdgeInsets.only(top: 8.0),
@@ -312,7 +311,7 @@ class DashboardTab extends StatelessWidget {
                 Text(log.userId, style: const TextStyle(color: Colors.blueGrey, fontSize: 10)),
               ],
             ),
-          )).toList(),
+          )),
       ],
     );
   }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:face_attendance_sdk/face_attendance_sdk.dart';
 import '../core/attendance_store.dart';
-import '../core/models.dart';
 
 class AttendanceTab extends StatefulWidget {
   final FaceDetectorInterface detector;

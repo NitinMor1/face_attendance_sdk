@@ -9,12 +9,12 @@ class AttendanceDialog extends StatelessWidget {
   final VoidCallback onConfirm;
 
   const AttendanceDialog({
-    Key? key,
+    super.key,
     required this.faceImage,
     required this.options,
     required this.onConfirm,
     this.name,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +31,7 @@ class AttendanceDialog extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: options.backgroundColors ?? 
-              [Colors.white, primaryColor.withOpacity(0.05)],
+              [Colors.white, primaryColor.withValues(alpha: 0.05)],
           ),
         ),
         child: Column(
@@ -54,7 +54,7 @@ class AttendanceDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),

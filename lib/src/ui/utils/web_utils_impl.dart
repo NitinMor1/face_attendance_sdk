@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:js_interop';
-import 'dart:typed_data';
 import 'package:face_attendance_sdk/face_attendance_sdk.dart';
 import 'package:face_attendance_sdk/src/engines/web/web_detector.dart';
 import 'package:web/web.dart' as web;
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 /// Actual web implementation of finding the video element and detecting faces.
 Future<List<FaceData>> detectWebFaces(FaceDetectorInterface detector) async {
   final videoElement = web.document.querySelector('video') as web.HTMLVideoElement?;
@@ -33,7 +33,7 @@ Future<Uint8List?> captureWebFrame() async {
     
     return base64Decode(base64);
   } catch (e) {
-    print('Web frame capture failed: $e');
+    debugPrint('Web frame capture failed: $e');
     return null;
   }
 }

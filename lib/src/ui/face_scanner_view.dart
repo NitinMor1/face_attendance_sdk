@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +23,7 @@ class FaceScannerView extends StatefulWidget {
   final Function(FaceProfile profile, Uint8List faceImage)? onFaceRecognized;
 
   const FaceScannerView({
-    Key? key,
+    super.key,
     required this.detector,
     this.recognizer,
     this.profiles = const [],
@@ -32,7 +31,7 @@ class FaceScannerView extends StatefulWidget {
     this.dialogOptions = const AttendanceDialogOptions(),
     this.onFaceDetected,
     this.onFaceRecognized,
-  }) : super(key: key);
+  });
 
   @override
   State<FaceScannerView> createState() => _FaceScannerViewState();
@@ -113,7 +112,7 @@ class _FaceScannerViewState extends State<FaceScannerView> {
       }
       if (mounted) setState(() {});
     } catch (e) {
-      print('Camera initialization failed: $e');
+      debugPrint('Camera initialization failed: $e');
     }
   }
 
@@ -195,7 +194,7 @@ class _FaceScannerViewState extends State<FaceScannerView> {
           });
         }
       } catch (e) {
-        print('Error processing image: $e');
+        debugPrint('Error processing image: $e');
       } finally {
         _isProcessing = false;
       }

@@ -1,4 +1,4 @@
-library face_attendance_sdk;
+library;
 
 export 'src/models/face_data.dart';
 export 'src/engines/detector_interface.dart';

@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/foundation.dart';
@@ -36,7 +35,7 @@ class ImageUtils {
       final height = boundingBox.height.toInt().clamp(0, convertedImage.height - y);
 
       if (width <= 0 || height <= 0) {
-        debugPrint('Invalid crop dimensions: ${width}x${height}');
+        debugPrint('Invalid crop dimensions: $width x $height');
         return null;
       }
 

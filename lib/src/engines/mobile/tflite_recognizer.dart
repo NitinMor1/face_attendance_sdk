@@ -1,6 +1,5 @@
-import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:camera/camera.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
@@ -16,9 +15,9 @@ class TfliteRecognizer implements FaceRecognizerInterface {
     try {
       // Assuming the model is in assets/models/mobile_facenet.tflite
       _interpreter = await Interpreter.fromAsset('packages/face_attendance_sdk/assets/models/mobile_facenet.tflite');
-      print('TFLite Interpreter loaded successfully');
+      debugPrint('TFLite Interpreter loaded successfully');
     } catch (e) {
-      print('Failed to load TFLite model: $e');
+      debugPrint('Failed to load TFLite model: $e');
     }
   }
 

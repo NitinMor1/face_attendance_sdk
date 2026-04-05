@@ -1,5 +1,3 @@
-import 'package:camera/camera.dart';
-import '../models/face_data.dart';
 import 'detector_interface.dart';
 
 FaceDetectorInterface createDetector() => throw UnsupportedError(

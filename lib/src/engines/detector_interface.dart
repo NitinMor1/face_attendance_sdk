@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:camera/camera.dart';
 import '../models/face_data.dart';
 import 'detector_stub.dart'

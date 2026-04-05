@@ -1,7 +1,8 @@
 name: face_attendance_sdk
 description: "A professional Facial Attendance SDK with real-time detection, classroom-optimized recognition, and a role-based analytics dashboard."
 version: 1.0.0+1
-homepage:
+repository: https://github.com/NitinMor1/face_attendance_sdk
+homepage: https://github.com/NitinMor1/face_attendance_sdk
 
 environment:
   sdk: ^3.9.0

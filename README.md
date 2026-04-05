@@ -1,39 +1,62 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Face Attendance SDK
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
-
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
-
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+A professional Flutter SDK for high-performance facial attendance systems. Optimized for collective environments like classrooms and workplaces, it features real-time multi-face detection, seamless biometric enrollment, and an advanced analytics dashboard.
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+- 📸 **Real-time Detection**: High-speed face detection on Mobile (ML Kit) and Web (MediaPipe).
+- 🧬 **Biometric Extraction**: Generates unique face embeddings for secure, non-image storage of identities.
+- 🎓 **Classroom Optimized**: Handles multiple faces simultaneously for rapid roll calls.
+- 🏢 **Role-Based Portals**: Built-in support for Faculty Dashboards and Classroom Terminals.
+- 📊 **Academic Analytics**: Tracks weekly trends and participation leaderboards.
+- 🌐 **True Web Support**: Native web frame capture via JS-Interop and HTML5 Canvas.
 
-## Getting started
+## Getting Started
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+### Prerequisites
+
+- Flutter SDK 3.10.0 or higher.
+- `camera` and `google_mlkit_face_detection` (Mobile).
+- `@mediapipe/tasks-vision` (Web - included via index.html).
+
+### Installation
+
+Add `face_attendance_sdk` to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  face_attendance_sdk: ^1.0.0
+```
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+### 1. Simple Face Scanner
 
 ```dart
-const like = 'sample';
+import 'package:face_attendance_sdk/face_attendance_sdk.dart';
+
+FaceScannerView(
+  detector: FaceDetectorInterface(),
+  recognizer: FaceRecognizerInterface(),
+  onFaceDetected: (face, image) {
+    print('Face found with confidence: ${face.confidence}');
+  },
+)
 ```
+
+### 2. Full Attendance System
+
+Check the `/example` folder for a complete **College Attendance Portal** implementation including:
+- Student Registration.
+- Multi-face Roll Call.
+- Weekly Trends & Analytical Dashboards.
 
 ## Additional information
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+- **Repository**: [https://github.com/NitinMor1/face_attendance_sdk](https://github.com/NitinMor1/face_attendance_sdk)
+- **Issues**: Please file bug reports or feature requests at our [issue tracker](https://github.com/NitinMor1/face_attendance_sdk/issues).
+- **Contributing**: All contributions are welcome! Submit a Pull Request to help improve the SDK.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
