@@ -1,6 +1,6 @@
 
 import 'package:camera/camera.dart';
-import 'package:face_attendance_sdk/face_attendance_sdk.dart';
+import 'package:face_recognition_kit/face_recognition_kit.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart' hide FaceLandmark;

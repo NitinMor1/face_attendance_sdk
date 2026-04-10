@@ -1,4 +1,4 @@
-import 'package:face_attendance_sdk/face_attendance_sdk.dart';
+import 'package:face_recognition_kit/face_recognition_kit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

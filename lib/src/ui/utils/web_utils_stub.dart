@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:face_attendance_sdk/face_attendance_sdk.dart';
+import 'package:face_recognition_kit/face_recognition_kit.dart';
 
 /// Stub for finding the video element and detecting faces.
 Future<List<FaceData>> detectWebFaces(FaceDetectorInterface detector) async {

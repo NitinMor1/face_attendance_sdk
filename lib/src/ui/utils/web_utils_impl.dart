@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:js_interop';
-import 'package:face_attendance_sdk/face_attendance_sdk.dart';
-import 'package:face_attendance_sdk/src/engines/web/web_detector.dart';
+import 'package:face_recognition_kit/face_recognition_kit.dart';
+import 'package:face_recognition_kit/src/engines/web/web_detector.dart';
 import 'package:web/web.dart' as web;
 import 'dart:convert';
 import 'package:flutter/foundation.dart';

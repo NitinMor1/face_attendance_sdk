@@ -1,6 +1,6 @@
-# Face Attendance SDK
+# Face Recognition Kit
 
-A professional Flutter SDK for high-performance facial attendance systems. Optimized for collective environments like classrooms and workplaces, it features real-time multi-face detection, seamless biometric enrollment, and an advanced analytics dashboard.
+A professional Flutter SDK for high-performance facial recognition systems. Optimized for collective environments like classrooms and workplaces, it features real-time multi-face detection, seamless biometric enrollment, and an advanced analytics dashboard.
 
 ## Features
 
@@ -21,11 +21,11 @@ A professional Flutter SDK for high-performance facial attendance systems. Optim
 
 ### Installation
 
-Add `face_attendance_sdk` to your `pubspec.yaml`:
+Add `face_recognition_kit` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  face_attendance_sdk: ^1.0.0
+  face_recognition_kit: ^1.0.0
 ```
 
 ## Usage
@@ -33,7 +33,7 @@ dependencies:
 ### 1. Simple Face Scanner
 
 ```dart
-import 'package:face_attendance_sdk/face_attendance_sdk.dart';
+import 'package:face_recognition_kit/face_recognition_kit.dart';
 
 FaceScannerView(
   detector: FaceDetectorInterface(),
@@ -53,8 +53,8 @@ Check the `/example` folder for a complete **College Attendance Portal** impleme
 
 ## Additional information
 
-- **Repository**: [https://github.com/NitinMor1/face_attendance_sdk](https://github.com/NitinMor1/face_attendance_sdk)
-- **Issues**: Please file bug reports or feature requests at our [issue tracker](https://github.com/NitinMor1/face_attendance_sdk/issues).
+- **Repository**: [https://github.com/NitinMor1/face_recognition_kit](https://github.com/NitinMor1/face_recognition_kit)
+- **Issues**: Please file bug reports or feature requests at our [issue tracker](https://github.com/NitinMor1/face_recognition_kit/issues).
 - **Contributing**: All contributions are welcome! Submit a Pull Request to help improve the SDK.
 
 ## License

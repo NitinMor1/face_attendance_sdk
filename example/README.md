@@ -1,6 +1,6 @@
-# Face Attendance SDK Example
+# Face Recognition Kit Example
 
-This repository contains a full-featured demonstration of the **Face Attendance SDK** implemented as a **College Attendance Portal**. 
+This repository contains a full-featured demonstration of the **Face Recognition Kit** implemented as a **College Attendance Portal**. 
 
 ## Features Demonstrated
 
@@ -14,8 +14,8 @@ This repository contains a full-featured demonstration of the **Face Attendance 
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/NitinMor1/face_attendance_sdk.git
-   cd face_attendance_sdk/example
+   git clone https://github.com/NitinMor1/face_recognition_kit.git
+   cd face_recognition_kit/example
    ```
 
 2. **Install Dependencies**:
