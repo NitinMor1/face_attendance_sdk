@@ -1,13 +1,12 @@
 import 'dart:ui';
 
-/// Represents the status of a face in the attendance system.
-enum AttendanceStatus {
+/// Represents the status of a face in the recognition system.
+enum RecognitionStatus {
   unknown,
   processing,
   recognized,
   notRecognized,
-  checkoutSuccessful,
-  checkinSuccessful,
+  success,
 }
 
 /// Represents a detected face landmark (e.g., eye, nose, mouth).
@@ -24,7 +23,7 @@ class FaceData {
   final double? confidence;
   final String? label;
   final List<double>? embedding;
-  final AttendanceStatus status;
+  final RecognitionStatus status;
   final Map<String, FaceLandmark> landmarks;
 
   FaceData({
@@ -32,7 +31,7 @@ class FaceData {
     this.confidence,
     this.label,
     this.embedding,
-    this.status = AttendanceStatus.unknown,
+    this.status = RecognitionStatus.unknown,
     this.landmarks = const {},
   });
 
@@ -41,7 +40,7 @@ class FaceData {
     double? confidence,
     String? label,
     List<double>? embedding,
-    AttendanceStatus? status,
+    RecognitionStatus? status,
     Map<String, FaceLandmark>? landmarks,
   }) {
     return FaceData(

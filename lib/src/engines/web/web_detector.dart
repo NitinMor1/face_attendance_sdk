@@ -13,7 +13,7 @@ class WebDetector implements FaceDetectorInterface {
   @override
   Future<void> initialize() async {
     try {
-      print('Initializing Web Face Detector...');
+      // Web Face Detector initialization starts
       
       final vision = await FilesetResolver.forVisionTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm'.toJS,
@@ -35,9 +35,9 @@ class WebDetector implements FaceDetectorInterface {
         throw TimeoutException('MediaPipe FaceDetector creation timeout');
       });
 
-      print('Web Face Detector initialized via MediaPipe');
+      // Web Face Detector initialized successfully
     } catch (e) {
-      print('Failed to initialize Web Face Detector: $e');
+      // Failed to initialize Web Face Detector
     }
   }
 

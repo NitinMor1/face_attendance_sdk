@@ -1,45 +1,53 @@
-# Face Recognition Kit Example
+# Face Recognition Kit Showcase
 
-This repository contains a full-featured demonstration of the **Face Recognition Kit** implemented as a **College Attendance Portal**. 
+A professional, high-performance demonstration of the **[Face Recognition Kit](https://pub.dev/packages/face_recognition_kit)** package. This application serves as a comprehensive feature-explorer for identifying and managing biometric identities across Mobile and Web platforms.
 
-## Features Demonstrated
+## Core Capabilities Demonstrated
 
-- 🏫 **Role-Based Portals**: Choose between "Faculty Dashboard" for analytics or "Classroom Terminal" for student check-ins.
-- 📸 **Automated Enrollment**: A professional flow for capturing student faces and generating biometric signatures.
-- 🎓 **Multi-Face Roll Call**: Rapidly detect and identify multiple students in a single camera view.
-- 📊 **Real-time Analytics**: High-end dashboard with weekly trends and participation leaderboards.
-- 🌐 **Web & Mobile Support**: Responsive design that works seamlessly on browsers (via JS-Interop) and native Android/iOS.
+- 🛡️ **Biometric Registry**: A streamlined interface for enrolling new identities with advanced embedding extraction.
+- 🎯 **Neural Scanner**: real-time, multi-face detection and identification using state-of-the-art AI engines.
+- 📊 **Analytics Dashboard**: Monitoring SDK event streams, match confidence, and registry health.
+- 🌫️ **Glassmorphism UI**: A premium user interface design using modern Flutter aesthetics like `BackdropFilter` and custom gradients.
+- 🌐 **True Cross-Platform**: Identical biometric logic running on **Android, iOS, and Web** (via MediaPipe WASM).
 
-## Getting Started
+## Quick Start
 
-1. **Clone the repository**:
+1. **Clone & Explore**:
    ```bash
    git clone https://github.com/NitinMor1/face_recognition_kit.git
    cd face_recognition_kit/example
    ```
 
-2. **Install Dependencies**:
+2. **Setup Dependencies**:
    ```bash
    flutter pub get
    ```
 
-3. **Run for Web**:
+3. **Deploy to Web**:
    ```bash
    flutter run -d chrome
    ```
-   *Note: For the web version, ensure you have an internet connection to load the MediaPipe Vision WASM assets.*
 
-4. **Run for Mobile**:
+4. **Deploy to Mobile**:
    ```bash
    flutter run
    ```
 
-## Project Structure
+## Implementation Guide
 
-- `lib/core/`: Contains the `AttendanceStore` (State management) and data models.
-- `lib/ui/`: All professional tab implementations (Dashboard, Enrollment, Attendance).
-- `web/index.html`: Custom MediaPipe integration for ultra-fast web face detection.
+This example is structured to be a reference for developers:
+- `lib/core/`: State management via `ToolkitStore` and generic data models (`SDKIdentity`, `RecognitionEvent`).
+- `lib/ui/`: Tab-based architecture demonstrating enrollment, scanning, and metrics.
+- `web/`: Custom configuration for handling large-model biometric detection on the web.
 
-## License
+## Platform Support
 
-This example is licensed under the same MIT License as the core SDK.
+| Feature | Android | iOS | Web |
+|---------|---------|-----|-----|
+| Face Detection | ✅ | ✅ | ✅ |
+| Face Recognition | ✅ | ✅ | ✅ |
+| Custom UI Overlays | ✅ | ✅ | ✅ |
+| Backdrop Blur | ✅ | ✅ | ✅ |
+
+---
+Powered by **Face Recognition Kit v1.1.0**

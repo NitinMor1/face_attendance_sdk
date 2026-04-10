@@ -1,73 +1,76 @@
-import 'dart:convert';
 
-enum UserRole { student, faculty, staff, visitor, user }
+enum IdentityCategory { individual, unauthorized, guest, enrolled }
 
-class AppUser {
+class SDKIdentity {
   final String id;
   final String name;
-  final String department;
-  final UserRole role;
+  final String group;
+  final IdentityCategory category;
   final List<double> embedding;
-  final DateTime createdAt;
+  final DateTime enrolledAt;
 
-  AppUser({
+  SDKIdentity({
     required this.id,
     required this.name,
-    this.department = 'General',
-    this.role = UserRole.user,
+    this.group = 'General',
+    this.category = IdentityCategory.enrolled,
     required this.embedding,
-    DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+    DateTime? enrolledAt,
+  }) : enrolledAt = enrolledAt ?? DateTime.now();
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
-        'department': department,
-        'role': role.index,
+        'group': group,
+        'category': category.index,
         'embedding': embedding,
-        'createdAt': createdAt.toIso8601String(),
+        'enrolledAt': enrolledAt.toIso8601String(),
       };
 
-  factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
+  factory SDKIdentity.fromJson(Map<String, dynamic> json) => SDKIdentity(
         id: json['id'],
         name: json['name'],
-        department: json['department'] ?? 'General',
-        role: UserRole.values[json['role']],
+        group: json['group'] ?? 'General',
+        category: IdentityCategory.values[json['category'] ?? 0],
         embedding: List<double>.from(json['embedding']),
-        createdAt: DateTime.parse(json['createdAt']),
+        enrolledAt: DateTime.parse(json['enrolledAt'] ?? json['createdAt'] ?? DateTime.now().toIso8601String()),
       );
 }
 
-enum AttendanceType { checkIn, checkOut }
+enum EventType { identification, verification, enrollment }
 
-class AttendanceRecord {
-  final String userId;
-  final String userName;
-  final UserRole userRole;
+class RecognitionEvent {
+  final String identityId;
+  final String identityName;
+  final IdentityCategory category;
   final DateTime timestamp;
-  final AttendanceType type;
+  final EventType type;
+  final double confidence;
 
-  AttendanceRecord({
-    required this.userId,
-    required this.userName,
-    required this.userRole,
+  RecognitionEvent({
+    required this.identityId,
+    required this.identityName,
+    required this.category,
     required this.timestamp,
     required this.type,
+    this.confidence = 1.0,
   });
 
   Map<String, dynamic> toJson() => {
-        'userId': userId,
-        'userName': userName,
-        'userRole': userRole.index,
+        'identityId': identityId,
+        'identityName': identityName,
+        'category': category.index,
         'timestamp': timestamp.toIso8601String(),
         'type': type.index,
+        'confidence': confidence,
       };
 
-  factory AttendanceRecord.fromJson(Map<String, dynamic> json) => AttendanceRecord(
-        userId: json['userId'],
-        userName: json['userName'],
-        userRole: UserRole.values[json['role'] ?? 0], // Compatibility fix
+  factory RecognitionEvent.fromJson(Map<String, dynamic> json) => RecognitionEvent(
+        identityId: json['identityId'] ?? json['userId'] ?? 'unknown',
+        identityName: json['identityName'] ?? json['userName'] ?? 'Unknown',
+        category: IdentityCategory.values[json['category'] ?? 0],
         timestamp: DateTime.parse(json['timestamp']),
-        type: AttendanceType.values[json['type']],
+        type: EventType.values[json['type'] ?? 0],
+        confidence: (json['confidence'] ?? 1.0).toDouble(),
       );
 }

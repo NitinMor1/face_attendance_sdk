@@ -2,13 +2,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../models/dialog_options.dart';
 
-class AttendanceDialog extends StatelessWidget {
+class RecognitionDialog extends StatelessWidget {
   final Uint8List faceImage;
   final String? name;
-  final AttendanceDialogOptions options;
+  final RecognitionDialogOptions options;
   final VoidCallback onConfirm;
 
-  const AttendanceDialog({
+  const RecognitionDialog({
     super.key,
     required this.faceImage,
     required this.options,

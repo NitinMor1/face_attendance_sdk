@@ -1,38 +1,38 @@
-import 'package:face_recognition_kit_example/ui/role_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:face_recognition_kit/face_recognition_kit.dart';
 
-import 'core/attendance_store.dart';
-import 'ui/enrollment_tab.dart';
-import 'ui/attendance_tab.dart';
-import 'ui/logs_tab.dart';
+import 'core/toolkit_store.dart';
+import 'ui/toolkit_home_screen.dart';
+import 'ui/identity_registry_tab.dart';
+import 'ui/recognition_scanner_tab.dart';
+import 'ui/metrics_dashboard_tab.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final store = AttendanceStore();
+  final store = ToolkitStore();
   await store.loadData().timeout(const Duration(seconds: 3), onTimeout: () {});
 
   runApp(
     ChangeNotifierProvider.value(
       value: store,
-      child: const MyApp(),
+      child: const FaceToolkitApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class FaceToolkitApp extends StatelessWidget {
+  const FaceToolkitApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Face Attendance Demo',
+      title: 'Face Recognition Kit',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.indigo,
-          primary: Colors.indigo.shade800,
+          primary: Colors.indigo.shade900,
           secondary: Colors.blueAccent,
         ),
         useMaterial3: true,
@@ -44,26 +44,24 @@ class MyApp extends StatelessWidget {
           foregroundColor: Colors.black,
         ),
       ),
-      home: Consumer<AttendanceStore>(
-        builder: (context, store, _) {
-          return store.appContextRole == null 
-            ? const RoleSelectionScreen() 
-            : const MainDashboard();
-        },
-      ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const ToolkitHomeScreen(),
+        '/showcase': (context) => const ShowcaseDashboard(),
+      },
     );
   }
 }
 
-class MainDashboard extends StatefulWidget {
-  const MainDashboard({super.key});
+class ShowcaseDashboard extends StatefulWidget {
+  const ShowcaseDashboard({super.key});
 
   @override
-  State<MainDashboard> createState() => _MainDashboardState();
+  State<ShowcaseDashboard> createState() => _ShowcaseDashboardState();
 }
 
-class _MainDashboardState extends State<MainDashboard> {
-  int _selectedIndex = 0;
+class _ShowcaseDashboardState extends State<ShowcaseDashboard> {
+  int _selectedIndex = 1; // Start with Scanner
   final FaceDetectorInterface _detector = FaceDetectorInterface();
   final FaceRecognizerInterface _recognizer = FaceRecognizerInterface();
   bool _isInitialized = false;
@@ -71,15 +69,15 @@ class _MainDashboardState extends State<MainDashboard> {
   @override
   void initState() {
     super.initState();
-    _initializeInitialEngines();
+    _initializeEngines();
   }
 
-  Future<void> _initializeInitialEngines() async {
+  Future<void> _initializeEngines() async {
     try {
       await _detector.initialize().timeout(const Duration(seconds: 15), onTimeout: () {});
-      await _recognizer.initialize().timeout(const Duration(seconds: 5), onTimeout: () {});
+      await _recognizer.initialize().timeout(const Duration(seconds: 10), onTimeout: () {});
     } catch (e) {
-      debugPrint('Engine initialization failed: $e');
+      debugPrint('SDK Engine initialization failed: $e');
     }
     
     if (mounted) {
@@ -105,8 +103,16 @@ class _MainDashboardState extends State<MainDashboard> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Initializing AI Engines...', style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 24),
+              Text(
+                'Powering up Neural Engines...',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Loading biometric models & camera drivers',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
             ],
           ),
         ),
@@ -114,50 +120,68 @@ class _MainDashboardState extends State<MainDashboard> {
     }
 
     final tabs = [
-       EnrollmentTab(detector: _detector, recognizer: _recognizer),
-       AttendanceTab(detector: _detector, recognizer: _recognizer),
-       const LogsTab(),
+      IdentityRegistryTab(detector: _detector, recognizer: _recognizer),
+      RecognitionScannerTab(detector: _detector, recognizer: _recognizer),
+      const MetricsDashboardTab(),
     ];
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+          onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
+        ),
         title: const Text(
-          'FACE ATTENDANCE SDK',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2, fontSize: 16),
+          'SDK SHOWCASE',
+          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2, fontSize: 14),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_sweep_outlined, color: Colors.grey),
+            icon: const Icon(Icons.info_outline),
             onPressed: () {
-               context.read<AttendanceStore>().clearData();
+              showAboutDialog(
+                context: context,
+                applicationName: 'Face Recognition Kit',
+                applicationVersion: '1.1.0',
+                applicationLegalese: '© 2026 Biometric AI Systems',
+              );
             },
           ),
         ],
       ),
-      body: tabs[_selectedIndex],
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: tabs[_selectedIndex],
+      ),
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))],
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(30),
           child: BottomNavigationBar(
             currentIndex: _selectedIndex,
             onTap: (index) => setState(() => _selectedIndex = index),
             backgroundColor: Colors.white,
-            selectedItemColor: Colors.indigo.shade800,
+            selectedItemColor: Colors.indigo.shade900,
             unselectedItemColor: Colors.grey.shade400,
             showSelectedLabels: true,
             showUnselectedLabels: false,
             elevation: 0,
             type: BottomNavigationBarType.fixed,
             items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.person_add_outlined), label: 'Register'),
-              BottomNavigationBarItem(icon: Icon(Icons.camera_front_outlined), label: 'Scanner'),
-              BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Logs'),
+              BottomNavigationBarItem(icon: Icon(Icons.app_registration_outlined), label: 'Registry'),
+              BottomNavigationBarItem(icon: Icon(Icons.center_focus_strong_outlined), label: 'Scanner'),
+              BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), label: 'Metrics'),
             ],
           ),
         ),

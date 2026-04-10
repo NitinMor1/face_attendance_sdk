@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Configuration options for the built-in success dialog.
-class AttendanceDialogOptions {
+/// Configuration options for the built-in recognition dialog.
+class RecognitionDialogOptions {
   /// The title shown when a face is first detected.
   final String title;
 
@@ -23,9 +23,9 @@ class AttendanceDialogOptions {
   /// Primary color for icons and buttons.
   final Color primaryColor;
 
-  const AttendanceDialogOptions({
+  const RecognitionDialogOptions({
     this.title = 'Face Detected',
-    this.successTitle = 'Attendance Marked!',
+    this.successTitle = 'Identity Recognized',
     this.welcomeMessage = 'Welcome, {name}',
     this.confirmButtonText = 'Confirm',
     this.displayDuration = const Duration(seconds: 5),

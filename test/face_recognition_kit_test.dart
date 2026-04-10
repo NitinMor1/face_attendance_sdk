@@ -2,8 +2,8 @@ import 'package:face_recognition_kit/face_recognition_kit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('Attendance matching logic', () {
-    final service = AttendanceService();
+  test('Recognition matching logic', () {
+    final service = RecognitionService();
     final profile = FaceProfile(
       id: '1',
       name: 'Nitin',

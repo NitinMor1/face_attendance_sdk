@@ -11,14 +11,15 @@ import 'utils/web_utils_stub.dart'
     if (dart.library.js_interop) 'utils/web_utils_impl.dart';
 
 import '../models/dialog_options.dart';
-import 'widgets/attendance_dialog.dart';
+import 'widgets/recognition_dialog.dart';
 
 class FaceScannerView extends StatefulWidget {
   final FaceDetectorInterface detector;
   final FaceRecognizerInterface? recognizer;
   final List<FaceProfile> profiles;
   final bool enableDefaultDialog;
-  final AttendanceDialogOptions dialogOptions;
+  final bool captureOnlyFace;
+  final RecognitionDialogOptions dialogOptions;
   final Function(FaceData face, Uint8List faceImage)? onFaceDetected;
   final Function(FaceProfile profile, Uint8List faceImage)? onFaceRecognized;
 
@@ -28,7 +29,8 @@ class FaceScannerView extends StatefulWidget {
     this.recognizer,
     this.profiles = const [],
     this.enableDefaultDialog = false,
-    this.dialogOptions = const AttendanceDialogOptions(),
+    this.captureOnlyFace = false,
+    this.dialogOptions = const RecognitionDialogOptions(),
     this.onFaceDetected,
     this.onFaceRecognized,
   });
@@ -48,14 +50,16 @@ class _FaceScannerViewState extends State<FaceScannerView> {
   void _showBuiltInDialog(FaceData face, Uint8List faceImage) {
     if (!widget.enableDefaultDialog || _isDialogShowing) return;
     _isDialogShowing = true;
-    _currentNameNotifier = ValueNotifier<String?>(null);
+    
+    // Fix: Initialize with the current face label if already recognized
+    _currentNameNotifier = ValueNotifier<String?>(face.label);
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => ValueListenableBuilder<String?>(
         valueListenable: _currentNameNotifier!,
-        builder: (context, name, _) => AttendanceDialog(
+        builder: (context, name, _) => RecognitionDialog(
           faceImage: faceImage,
           name: name,
           options: widget.dialogOptions,
@@ -96,7 +100,7 @@ class _FaceScannerViewState extends State<FaceScannerView> {
 
     _controller = CameraController(
       frontCamera,
-      ResolutionPreset.medium,
+      ResolutionPreset.high, // Increased for better cropping quality
       enableAudio: false,
       imageFormatGroup: kIsWeb ? null : ImageFormatGroup.nv21,
     );
@@ -140,17 +144,32 @@ class _FaceScannerViewState extends State<FaceScannerView> {
         faces = [];
       }
 
-        if (faces.isNotEmpty) {
+      // SINGLE FACE ENFORCEMENT: Only handle the first (primary) face
+      if (faces.length > 1) {
+        faces = [faces.first];
+      }
+
+      if (faces.isNotEmpty) {
           for (var i = 0; i < faces.length; i++) {
             Uint8List? faceImage;
-            if (kIsWeb) {
-              faceImage = await captureWebFrame();
-            } else if (image != null) {
-              faceImage = ImageUtils.cropFace(
-                image, 
-                faces[i].boundingBox, 
-                _controller!.description.sensorOrientation,
-              );
+            
+            // CROP LOGIC: Use cropBox on Web or ImageUtils on Mobile
+            if (widget.captureOnlyFace) {
+               if (kIsWeb) {
+                faceImage = await captureWebFrame(cropBox: faces[i].boundingBox);
+              } else if (image != null) {
+                faceImage = ImageUtils.cropFace(
+                  image, 
+                  faces[i].boundingBox, 
+                  _controller!.description.sensorOrientation,
+                );
+              }
+            } else {
+               if (kIsWeb) {
+                faceImage = await captureWebFrame();
+              } else if (image != null) {
+                faceImage = Uint8List.fromList(ImageUtils.convertedImageToBytes(image));
+              }
             }
 
             if (widget.recognizer != null && (image != null || kIsWeb)) {
@@ -161,7 +180,7 @@ class _FaceScannerViewState extends State<FaceScannerView> {
                 faces[i] = faces[i].copyWith(
                   embedding: embedding,
                   label: match.name,
-                  status: AttendanceStatus.recognized,
+                  status: RecognitionStatus.recognized,
                 );
                 
                 _currentNameNotifier?.value = match.name;
@@ -171,19 +190,16 @@ class _FaceScannerViewState extends State<FaceScannerView> {
                 }
               } else {
                 faces[i] = faces[i].copyWith(
-                  embedding: embedding, // STORE embedding for enrollment
-                  status: AttendanceStatus.notRecognized,
+                  embedding: embedding, 
+                  status: RecognitionStatus.notRecognized,
                 );
               }
             }
 
             // TRIGGER CALLBACKS AFTER EMBEDDING IS READY
             if (faceImage != null) {
-              debugPrint('Face detected and captured (embedding ready), triggering callback');
               widget.onFaceDetected?.call(faces[i], faceImage);
               _showBuiltInDialog(faces[i], faceImage);
-            } else {
-              debugPrint('Face detected but capture failed');
             }
           }
         }
@@ -218,18 +234,31 @@ class _FaceScannerViewState extends State<FaceScannerView> {
         return const Center(child: CircularProgressIndicator());
       }
 
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          CameraPreview(_controller!),
-          CustomPaint(
-            painter: FacePainter(
-              faces: _faces,
-              imageSize: previewSize,
-              rotation: _controller!.description.sensorOrientation,
+      // PRECISION ALIGNMENT & FULL-LENGTH VIEW:
+      // We use FittedBox + BoxFit.cover to make the camera fill the container
+      // while keeping the AspectRatio + CustomPaint stack scaled as a single unit.
+      // This ensures the face boxes stay perfectly aligned even when cropped/zoomed.
+      return ClipRRect(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: kIsWeb ? previewSize.width : previewSize.height,
+            height: kIsWeb ? previewSize.height : previewSize.width,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CameraPreview(_controller!),
+                CustomPaint(
+                  painter: FacePainter(
+                    faces: _faces,
+                    imageSize: previewSize,
+                    rotation: _controller!.description.sensorOrientation,
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       );
     }
   }

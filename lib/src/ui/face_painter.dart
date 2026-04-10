@@ -30,9 +30,9 @@ class FacePainter extends CustomPainter {
       final rect = _transformRect(face.boundingBox, size, scaleX, scaleY);
       
       // Select color based on status
-      if (face.status == AttendanceStatus.recognized) {
+      if (face.status == RecognitionStatus.recognized) {
         paint.color = Colors.blueAccent;
-      } else if (face.status == AttendanceStatus.notRecognized) {
+      } else if (face.status == RecognitionStatus.notRecognized) {
         paint.color = Colors.redAccent;
       } else {
         paint.color = Colors.greenAccent;
@@ -60,7 +60,11 @@ class FacePainter extends CustomPainter {
 
   Offset _transformPoint(Offset point, Size size, double scaleX, double scaleY) {
     if (kIsWeb) {
-      return Offset(point.dx * scaleX, point.dy * scaleY);
+      // Mirroring fix: Web front camera is mirrored by default
+      return Offset(
+        size.width - (point.dx * scaleX),
+        point.dy * scaleY,
+      );
     }
     return Offset(
       size.width - (point.dx * scaleX),
@@ -88,13 +92,12 @@ class FacePainter extends CustomPainter {
 
   Rect _transformRect(Rect rect, Size size, double scaleX, double scaleY) {
     if (kIsWeb) {
-      // MediaPipe Web results are already scaled/normalized sometimes, 
-      // but if we use LTWH from the pixel-based results:
-      return Rect.fromLTWH(
-        rect.left * scaleX,
+      // Mirroring fix: Web front camera is mirrored by default
+      return Rect.fromLTRB(
+        size.width - (rect.right * scaleX),
         rect.top * scaleY,
-        rect.width * scaleX,
-        rect.height * scaleY,
+        size.width - (rect.left * scaleX),
+        rect.bottom * scaleY,
       );
     }
     // Mobile mirroring/rotation logic

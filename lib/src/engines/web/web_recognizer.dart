@@ -5,7 +5,7 @@ import 'package:camera/camera.dart';
 class WebRecognizer implements FaceRecognizerInterface {
   @override
   Future<void> initialize() async {
-    print('Web face recognition is not yet implemented (requires JS-Interop)');
+    // Web face recognition is not yet implemented (requires JS-Interop)
   }
 
   @override

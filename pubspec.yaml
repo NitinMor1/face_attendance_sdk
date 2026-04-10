@@ -1,8 +1,14 @@
 name: face_recognition_kit
 description: "A professional Face Recognition Kit with real-time detection, classroom-optimized recognition, and a role-based analytics dashboard."
-version: 1.0.0+1
+version: 1.1.0
 repository: https://github.com/NitinMor1/face_recognition_kit
 homepage: https://github.com/NitinMor1/face_recognition_kit
+topics:
+  - face-recognition
+  - biometrics
+  - attendance
+  - flutter-sdk
+  - machine-learning
 
 environment:
   sdk: ^3.9.0

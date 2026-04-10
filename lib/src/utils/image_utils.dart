@@ -109,4 +109,17 @@ class ImageUtils {
       order: img.ChannelOrder.bgra,
     );
   }
+
+  /// Converts a [CameraImage] to JPEG bytes.
+  static Uint8List convertedImageToBytes(CameraImage image) {
+    img.Image? converted;
+    if (image.format.group == ImageFormatGroup.yuv420 || image.format.group == ImageFormatGroup.nv21) {
+      converted = _convertYUV420ToImage(image);
+    } else if (image.format.group == ImageFormatGroup.bgra8888) {
+      converted = _convertBGRA8888ToImage(image);
+    }
+    
+    if (converted == null) return Uint8List(0);
+    return Uint8List.fromList(img.encodeJpg(converted));
+  }
 }

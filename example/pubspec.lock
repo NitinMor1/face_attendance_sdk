@@ -26,7 +26,7 @@ packages:
     source: hosted
     version: "2.1.2"
   camera:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: camera
       sha256: "034c38cb8014d29698dcae6d20276688a1bf74e6487dfeb274d70ea05d5f7777"
@@ -58,7 +58,7 @@ packages:
     source: hosted
     version: "2.12.0"
   camera_web:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: camera_web
       sha256: "57f49a635c8bf249d07fb95eb693d7e4dda6796dedb3777f9127fb54847beba7"
@@ -103,7 +103,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.0.0+1"
+    version: "1.1.0"
   fake_async:
     dependency: transitive
     description:
