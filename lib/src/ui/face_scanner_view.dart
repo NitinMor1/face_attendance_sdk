@@ -11,6 +11,7 @@ import 'utils/web_utils_stub.dart'
     if (dart.library.js_interop) 'utils/web_utils_impl.dart';
 
 import '../models/dialog_options.dart';
+import '../models/guidance_options.dart';
 import 'widgets/recognition_dialog.dart';
 
 class FaceScannerView extends StatefulWidget {
@@ -19,7 +20,9 @@ class FaceScannerView extends StatefulWidget {
   final List<FaceProfile> profiles;
   final bool enableDefaultDialog;
   final bool captureOnlyFace;
+  final double cropPadding;
   final RecognitionDialogOptions dialogOptions;
+  final FaceGuidanceOptions guidanceOptions;
   final Function(FaceData face, Uint8List faceImage)? onFaceDetected;
   final Function(FaceProfile profile, Uint8List faceImage)? onFaceRecognized;
 
@@ -30,7 +33,9 @@ class FaceScannerView extends StatefulWidget {
     this.profiles = const [],
     this.enableDefaultDialog = false,
     this.captureOnlyFace = false,
+    this.cropPadding = 0.0,
     this.dialogOptions = const RecognitionDialogOptions(),
+    this.guidanceOptions = const FaceGuidanceOptions(),
     this.onFaceDetected,
     this.onFaceRecognized,
   });
@@ -46,9 +51,12 @@ class _FaceScannerViewState extends State<FaceScannerView> {
   bool _isDialogShowing = false;
   Timer? _webDetectionTimer;
   ValueNotifier<String?>? _currentNameNotifier;
+  String? _activeGuidance;
+  bool _isRecognitionBusy = false;
+  DateTime? _lastRecognitionTime;
 
   void _showBuiltInDialog(FaceData face, Uint8List faceImage) {
-    if (!widget.enableDefaultDialog || _isDialogShowing) return;
+    if (!mounted || !widget.enableDefaultDialog || _isDialogShowing) return;
     _isDialogShowing = true;
     
     // Fix: Initialize with the current face label if already recognized
@@ -120,94 +128,82 @@ class _FaceScannerViewState extends State<FaceScannerView> {
     }
   }
 
-  void _processCameraImage(CameraImage? image) async {
-    if (_isProcessing || _isDialogShowing) return;
+    void _processCameraImage(CameraImage? image) async {
+      if (!mounted || _isProcessing || _isDialogShowing) return;
 
-    // Cooldown: Don't show another dialog for 3 seconds after dismissing one
-    if (_lastDialogDismissTime != null && 
-        DateTime.now().difference(_lastDialogDismissTime!) < const Duration(seconds: 3)) {
-      return;
-    }
-
-    _isProcessing = true;
-
-    try {
-      List<FaceData> faces;
-      if (kIsWeb) {
-        faces = await detectWebFaces(widget.detector);
-      } else if (image != null) {
-        faces = await widget.detector.detectFromImage(
-          image,
-          _controller!.description.sensorOrientation,
-        );
-      } else {
-        faces = [];
+      // Cooldown: Don't show another dialog for 3 seconds after dismissing one
+      if (_lastDialogDismissTime != null && 
+          DateTime.now().difference(_lastDialogDismissTime!) < const Duration(seconds: 3)) {
+        return;
       }
 
-      // SINGLE FACE ENFORCEMENT: Only handle the first (primary) face
-      if (faces.length > 1) {
-        faces = [faces.first];
-      }
+      _isProcessing = true;
 
-      if (faces.isNotEmpty) {
-          for (var i = 0; i < faces.length; i++) {
-            Uint8List? faceImage;
-            
-            // CROP LOGIC: Use cropBox on Web or ImageUtils on Mobile
-            if (widget.captureOnlyFace) {
-               if (kIsWeb) {
-                faceImage = await captureWebFrame(cropBox: faces[i].boundingBox);
-              } else if (image != null) {
-                faceImage = ImageUtils.cropFace(
-                  image, 
-                  faces[i].boundingBox, 
-                  _controller!.description.sensorOrientation,
-                );
-              }
-            } else {
-               if (kIsWeb) {
-                faceImage = await captureWebFrame();
-              } else if (image != null) {
-                faceImage = Uint8List.fromList(ImageUtils.convertedImageToBytes(image));
-              }
-            }
+      try {
+        List<FaceData> faces;
+        if (kIsWeb) {
+          faces = await detectWebFaces(widget.detector);
+        } else if (image != null) {
+          faces = await widget.detector.detectFromImage(
+            image,
+            _controller!.description.sensorOrientation,
+          );
+        } else {
+          faces = [];
+        }
 
-            if (widget.recognizer != null && (image != null || kIsWeb)) {
-              final embedding = await widget.recognizer!.extractEmbedding(image, faces[i]);
-              final match = await widget.recognizer!.matchFace(embedding, widget.profiles);
-              
-              if (match != null) {
-                faces[i] = faces[i].copyWith(
-                  embedding: embedding,
-                  label: match.name,
-                  status: RecognitionStatus.recognized,
-                );
-                
-                _currentNameNotifier?.value = match.name;
+        // Adaptive Logic: If a face is found, we keep tracking it on every frame.
+        // But we only run RECOGNITION (heavy stuff) every 500ms-1s to avoid lag.
+        bool shouldRunRecognition = widget.recognizer != null && 
+                                   !_isRecognitionBusy && 
+                                   (_lastRecognitionTime == null || 
+                                    DateTime.now().difference(_lastRecognitionTime!) > const Duration(milliseconds: 700));
 
-                if (faceImage != null) {
-                  widget.onFaceRecognized?.call(match, faceImage);
-                }
-              } else {
-                faces[i] = faces[i].copyWith(
-                  embedding: embedding, 
-                  status: RecognitionStatus.notRecognized,
-                );
-              }
-            }
-
-            // TRIGGER CALLBACKS AFTER EMBEDDING IS READY
-            if (faceImage != null) {
-              widget.onFaceDetected?.call(faces[i], faceImage);
-              _showBuiltInDialog(faces[i], faceImage);
-            }
+        // 1. LIGHTING CHECK (Dynamic Lighting Guidance)
+        if (widget.guidanceOptions.enabled && !kIsWeb && image != null) {
+          final brightness = _calculateAverageBrightness(image);
+          if (brightness < widget.guidanceOptions.brightnessThreshold) {
+            if (mounted) setState(() => _activeGuidance = widget.guidanceOptions.poorLightingMessage);
+            _isProcessing = false;
+            return;
           }
         }
 
-        if (mounted) {
-          setState(() {
-            _faces = faces;
-          });
+        // 2. FACE DETECTION & RECOGNITION
+        if (faces.isNotEmpty) {
+          if (faces.length > 1) {
+            faces = [faces.first];
+          }
+          
+          final mainFace = faces.first;
+
+          // Guidance Logic for visible face
+          if (widget.guidanceOptions.enabled) {
+            _updateGuidance(mainFace, image);
+          } else {
+            _activeGuidance = null;
+          }
+
+          if (shouldRunRecognition && (image != null || kIsWeb)) {
+             _isRecognitionBusy = true;
+             _lastRecognitionTime = DateTime.now();
+
+             _runRecognitionAsync(image, mainFace);
+          }
+          
+          if (mounted) {
+            setState(() {
+              _faces = faces;
+            });
+          }
+        } else {
+          // NO FACE DETECTED: Reset status and show guidance
+          if (widget.guidanceOptions.enabled) {
+            if (mounted) setState(() => _activeGuidance = widget.guidanceOptions.noFaceMessage);
+          } else {
+            if (mounted) setState(() => _activeGuidance = null);
+          }
+          if (mounted) setState(() => _faces = []);
         }
       } catch (e) {
         debugPrint('Error processing image: $e');
@@ -216,11 +212,139 @@ class _FaceScannerViewState extends State<FaceScannerView> {
       }
     }
 
+    double _calculateAverageBrightness(CameraImage image) {
+      if (image.planes.isEmpty) return 100.0;
+      final Uint8List bytes = image.planes[0].bytes;
+      int total = 0;
+      // Sampling every 10th pixel for performance
+      for (int i = 0; i < bytes.length; i += 10) {
+        total += bytes[i];
+      }
+      return total / (bytes.length / 10);
+    }
+
+    void _runRecognitionAsync(CameraImage? image, FaceData face) async {
+       try {
+          Uint8List? faceImage;
+          if (widget.captureOnlyFace) {
+            if (kIsWeb) {
+              faceImage = await captureWebFrame(cropBox: face.boundingBox);
+            } else if (image != null) {
+              faceImage = ImageUtils.cropFace(
+                image, 
+                face.boundingBox, 
+                _controller!.description.sensorOrientation,
+                paddingFactor: widget.cropPadding,
+              );
+            }
+          } else {
+            if (kIsWeb) {
+              faceImage = await captureWebFrame();
+            } else if (image != null) {
+              faceImage = Uint8List.fromList(ImageUtils.convertedImageToBytes(image));
+            }
+          }
+
+          final embedding = await widget.recognizer!.extractEmbedding(
+            image, 
+            face, 
+            rotation: _controller!.description.sensorOrientation,
+            flipHorizontal: _controller!.description.lensDirection == CameraLensDirection.front,
+          );
+          final match = await widget.recognizer!.matchFace(embedding, widget.profiles);
+          
+          FaceData updatedFace = face.copyWith(embedding: embedding);
+          
+          if (match != null) {
+            updatedFace = updatedFace.copyWith(
+              label: match.name,
+              status: RecognitionStatus.recognized,
+            );
+            _currentNameNotifier?.value = match.name;
+            if (faceImage != null) widget.onFaceRecognized?.call(match, faceImage);
+          } else {
+            updatedFace = updatedFace.copyWith(status: RecognitionStatus.notRecognized);
+          }
+
+          if (faceImage != null) {
+            widget.onFaceDetected?.call(updatedFace, faceImage);
+            _showBuiltInDialog(updatedFace, faceImage);
+          }
+
+          if (mounted) {
+            setState(() {
+              _faces = [updatedFace];
+            });
+          }
+       } finally {
+         _isRecognitionBusy = false;
+       }
+    }
+
+    void _updateGuidance(FaceData face, CameraImage? image) {
+      String? message;
+      final options = widget.guidanceOptions;
+
+      // Centering Check
+      if (image != null) {
+         final centerX = face.boundingBox.center.dx;
+         final centerY = face.boundingBox.center.dy;
+         final imgW = image.width.toDouble();
+         final imgH = image.height.toDouble();
+
+         if (centerX < imgW * 0.1 || centerX > imgW * 0.9 || centerY < imgH * 0.1 || centerY > imgH * 0.9) {
+           message = 'Center your face in the frame';
+         }
+      }
+
+      if (message == null && face.leftEyeOpenProbability != null && face.rightEyeOpenProbability != null) {
+        if (face.leftEyeOpenProbability! < 0.35 || 
+            face.rightEyeOpenProbability! < 0.35) {
+          message = options.openEyesMessage;
+        }
+      }
+
+      if (message == null && face.headEulerAngleY != null) {
+        if (face.headEulerAngleY! < -options.rotationThreshold) {
+          message = options.turnRightMessage;
+        } else if (face.headEulerAngleY! > options.rotationThreshold) {
+          message = options.turnLeftMessage;
+        }
+      }
+
+      if (message == null && face.boundingBox.width < 100) {
+        message = options.moveCloserMessage;
+      }
+
+      // If no warning but face is detected, show 'Stay still'
+      message ??= options.stayStillMessage;
+
+      if (_activeGuidance != message) {
+        if (mounted) setState(() => _activeGuidance = message);
+      }
+    }
+
     @override
     void dispose() {
-      _webDetectionTimer?.cancel();
-      _controller?.dispose();
+      _stopAllProcessing();
       super.dispose();
+    }
+
+    Future<void> _stopAllProcessing() async {
+      _webDetectionTimer?.cancel();
+      _webDetectionTimer = null;
+      
+      if (_controller != null) {
+        if (_controller!.value.isStreamingImages) {
+          try {
+            await _controller!.stopImageStream();
+          } catch (e) {
+            debugPrint('Error stopping stream: $e');
+          }
+        }
+        await _controller?.dispose();
+        _controller = null;
+      }
     }
 
     @override
@@ -239,24 +363,133 @@ class _FaceScannerViewState extends State<FaceScannerView> {
       // while keeping the AspectRatio + CustomPaint stack scaled as a single unit.
       // This ensures the face boxes stay perfectly aligned even when cropped/zoomed.
       return ClipRRect(
-        child: FittedBox(
-          fit: BoxFit.cover,
-          child: SizedBox(
-            width: kIsWeb ? previewSize.width : previewSize.height,
-            height: kIsWeb ? previewSize.height : previewSize.width,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                CameraPreview(_controller!),
-                CustomPaint(
-                  painter: FacePainter(
-                    faces: _faces,
-                    imageSize: previewSize,
-                    rotation: _controller!.description.sensorOrientation,
-                  ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Camera Layer (FittedBox)
+            FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: kIsWeb ? previewSize.width : previewSize.height,
+                height: kIsWeb ? previewSize.height : previewSize.width,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CameraPreview(_controller!),
+                    CustomPaint(
+                      painter: FacePainter(
+                        faces: _faces,
+                        imageSize: previewSize,
+                        rotation: _controller!.description.sensorOrientation,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
+            
+            // Logical UI Layer (Standard logical pixels)
+            if (_activeGuidance != null)
+              _buildGuidanceOverlay(),
+            
+            if (_faces.isNotEmpty)
+              _buildRecognitionStatusCard(_faces.first),
+          ],
+        ),
+      );
+    }
+
+    Widget _buildRecognitionStatusCard(FaceData face) {
+      final isRecognized = face.status == RecognitionStatus.recognized;
+      final isSearching = face.status == RecognitionStatus.processing || face.embedding == null;
+      final isUnknown = face.status == RecognitionStatus.notRecognized;
+
+      Color color;
+      IconData icon;
+      String title;
+      String subtitle;
+
+      if (isRecognized) {
+        color = Colors.indigo;
+        icon = Icons.verified;
+        title = face.label ?? 'Recognized';
+        final conf = face.confidence != null ? '${(face.confidence! * 100).toInt()}%' : 'High';
+        subtitle = 'Identity Verified ($conf)';
+      } else if (isUnknown) {
+        color = Colors.redAccent;
+        icon = Icons.error_outline;
+        title = 'Unknown Face';
+        subtitle = 'Not in registry';
+      } else if (isSearching) {
+        color = Colors.blueGrey;
+        icon = Icons.search;
+        title = 'Searching...';
+        subtitle = 'Analyzing Biometrics';
+      } else {
+        color = Colors.blueGrey;
+        icon = Icons.radar;
+        title = 'Face Detected';
+        subtitle = 'Scanning...';
+      }
+
+      return Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 60),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(25),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Text(
+                    title,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 10, letterSpacing: 0.5),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget _buildGuidanceOverlay() {
+      if (widget.guidanceOptions.guidanceBuilder != null) {
+        return widget.guidanceOptions.guidanceBuilder!(context, _activeGuidance!);
+      }
+
+      return Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          margin: const EdgeInsets.only(top: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Text(
+            _activeGuidance!,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
       );

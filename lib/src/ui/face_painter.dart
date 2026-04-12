@@ -46,14 +46,6 @@ class FacePainter extends CustomPainter {
         final pos = _transformPoint(landmark.position, size, scaleX, scaleY);
         canvas.drawCircle(pos, 3, landmarkPaint);
       }
-
-      // Draw Label & Confidence
-      final label = face.label ?? 'Detecting...';
-      final confidence = face.confidence != null 
-          ? ' (${(face.confidence! * 100).toStringAsFixed(0)}%)' 
-          : '';
-
-      _drawText(canvas, rect.left, rect.top - 25, '$label$confidence');
     }
   }
 
@@ -72,23 +64,6 @@ class FacePainter extends CustomPainter {
     );
   }
 
-  void _drawText(Canvas canvas, double x, double y, String text) {
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          backgroundColor: Colors.black54,
-        ),
-      ),
-      textAlign: TextAlign.left,
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    textPainter.paint(canvas, Offset(x, y));
-  }
 
   Rect _transformRect(Rect rect, Size size, double scaleX, double scaleY) {
     if (kIsWeb) {

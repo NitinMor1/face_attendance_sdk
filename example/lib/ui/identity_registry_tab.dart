@@ -27,60 +27,111 @@ class _IdentityRegistryTabState extends State<IdentityRegistryTab> {
   bool _isScanning = false;
   List<double>? _capturedEmbedding;
   Uint8List? _capturedImage;
+  String? _captureFeedback;
 
   void _onFaceCaptured(FaceData face, Uint8List image) async {
-    if (_capturedEmbedding != null || !mounted) return; 
+    if (_capturedEmbedding != null || !mounted || !_isScanning) return; 
 
-    if (face.embedding != null) {
-      setState(() => _isScanning = false);
+    // BIOMETRIC QUALITY GATE FOR ENROLLMENT:
+    // 1. Eyes must be open
+    final eyesOpen = (face.leftEyeOpenProbability ?? 0) > 0.4 && 
+                      (face.rightEyeOpenProbability ?? 0) > 0.4;
+    
+    // 2. Head must be centered (Euler angle Y/Z < 15 degrees) - LOOSENED for better UX
+    final headCentered = (face.headEulerAngleY ?? 0).abs() < 15 && 
+                          (face.headEulerAngleZ ?? 0).abs() < 15;
+    
+    // 3. Size/Distance check
+    final isGoodDistance = face.boundingBox.width > 80;
 
-      bool? confirmed = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-          title: const Text('Confirm Biometric Capture'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.memory(image, height: 200, width: 200, fit: BoxFit.cover),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'High-quality embedding extracted. Enroll this identity?',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('RETAKE'),
+    String? feedback;
+    if (widget.recognizer.initializationError != null) {
+      feedback = 'AI Error: Model file missing or corrupted';
+    } else if (face.embedding == null || face.embedding!.isEmpty) {
+      feedback = 'Initializing AI Model...';
+    } else if (!isGoodDistance) {
+      feedback = 'Move closer to the camera';
+    } else if (!headCentered) {
+      feedback = 'Look straight at the camera';
+    } else if (!eyesOpen) {
+      feedback = 'Ensure eyes are clearly visible';
+    }
+
+    if (feedback != null) {
+      if (mounted) setState(() => _captureFeedback = feedback);
+      return; 
+    }
+
+    // Success! Capture conditions met. Clear feedback.
+    if (mounted) setState(() => _captureFeedback = null);
+
+    // Success! Capture conditions met.
+    setState(() => _isScanning = false);
+
+    bool? confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        title: const Text('Confirm Biometric Capture'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.memory(image, height: 200, width: 200, fit: BoxFit.cover),
+                ),
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.green,
+                    radius: 14,
+                    child: Icon(Icons.check, size: 18, color: Colors.white),
+                  ),
+                ),
+              ],
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('ENROLL'),
+            const SizedBox(height: 20),
+            const Text(
+              'High-quality capture detected!',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Your biometrics were captured under perfect conditions. Proceed with enrollment?',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 13),
             ),
           ],
         ),
-      );
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('RETAKE'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.indigo,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('ENROLL'),
+          ),
+        ],
+      ),
+    );
 
-      if (confirmed == true) {
-        setState(() {
-          _capturedEmbedding = face.embedding;
-          _capturedImage = image;
-        });
-      } else {
-        setState(() => _isScanning = true);
-      }
+    if (confirmed == true) {
+      setState(() {
+        _capturedEmbedding = face.embedding;
+        _capturedImage = image;
+      });
+    } else {
+      setState(() => _isScanning = true);
     }
   }
 
@@ -277,11 +328,33 @@ class _IdentityRegistryTabState extends State<IdentityRegistryTab> {
           aspectRatio: 1,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(30),
-            child: FaceScannerView(
-              detector: widget.detector,
-              recognizer: widget.recognizer,
-              onFaceDetected: _onFaceCaptured,
-              enableDefaultDialog: false,
+            child: Stack(
+              children: [
+                FaceScannerView(
+                  detector: widget.detector,
+                  recognizer: widget.recognizer,
+                  onFaceDetected: _onFaceCaptured,
+                  enableDefaultDialog: false,
+                ),
+                if (_captureFeedback != null)
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        _captureFeedback!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

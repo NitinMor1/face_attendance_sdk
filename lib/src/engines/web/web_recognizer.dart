@@ -9,7 +9,13 @@ class WebRecognizer implements FaceRecognizerInterface {
   }
 
   @override
-  Future<List<double>> extractEmbedding(CameraImage? image, FaceData face) async {
+  bool get isReady => true; // Web uses mock for now
+
+  @override
+  String? get initializationError => null;
+
+  @override
+  Future<List<double>> extractEmbedding(CameraImage? image, FaceData face, {int rotation = 0, bool flipHorizontal = false}) async {
     // MediaPipe FaceDetector on web doesn't provide embeddings.
     // For the demo/live project, we generate a mock embedding based on face location
     // to allow the enrollment and recognition flow to function.

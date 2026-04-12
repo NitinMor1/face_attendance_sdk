@@ -13,6 +13,7 @@ class MlKitDetector implements FaceDetectorInterface {
     _faceDetector = FaceDetector(
       options: FaceDetectorOptions(
         enableLandmarks: true, // Enable for verification
+        enableClassification: true, // Needed for eye open probability
         performanceMode: FaceDetectorMode.accurate,
       ),
     );
@@ -48,6 +49,10 @@ class MlKitDetector implements FaceDetectorInterface {
           boundingBox: face.boundingBox,
           landmarks: _extractLandmarks(face),
           confidence: 0.99, // Static for UI proof
+          headEulerAngleY: face.headEulerAngleY,
+          headEulerAngleZ: face.headEulerAngleZ,
+          leftEyeOpenProbability: face.leftEyeOpenProbability,
+          rightEyeOpenProbability: face.rightEyeOpenProbability,
         );
       }).toList();
     } catch (e) {

@@ -25,6 +25,10 @@ class FaceData {
   final List<double>? embedding;
   final RecognitionStatus status;
   final Map<String, FaceLandmark> landmarks;
+  final double? headEulerAngleY;
+  final double? headEulerAngleZ;
+  final double? leftEyeOpenProbability;
+  final double? rightEyeOpenProbability;
 
   FaceData({
     required this.boundingBox,
@@ -33,6 +37,10 @@ class FaceData {
     this.embedding,
     this.status = RecognitionStatus.unknown,
     this.landmarks = const {},
+    this.headEulerAngleY,
+    this.headEulerAngleZ,
+    this.leftEyeOpenProbability,
+    this.rightEyeOpenProbability,
   });
 
   FaceData copyWith({
@@ -42,6 +50,10 @@ class FaceData {
     List<double>? embedding,
     RecognitionStatus? status,
     Map<String, FaceLandmark>? landmarks,
+    double? headEulerAngleY,
+    double? headEulerAngleZ,
+    double? leftEyeOpenProbability,
+    double? rightEyeOpenProbability,
   }) {
     return FaceData(
       boundingBox: boundingBox ?? this.boundingBox,
@@ -50,6 +62,10 @@ class FaceData {
       embedding: embedding ?? this.embedding,
       status: status ?? this.status,
       landmarks: landmarks ?? this.landmarks,
+      headEulerAngleY: headEulerAngleY ?? this.headEulerAngleY,
+      headEulerAngleZ: headEulerAngleZ ?? this.headEulerAngleZ,
+      leftEyeOpenProbability: leftEyeOpenProbability ?? this.leftEyeOpenProbability,
+      rightEyeOpenProbability: rightEyeOpenProbability ?? this.rightEyeOpenProbability,
     );
   }
 }

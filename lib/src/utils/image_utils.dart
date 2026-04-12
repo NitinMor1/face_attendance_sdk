@@ -5,14 +5,15 @@ import 'dart:ui';
 
 class ImageUtils {
   /// Crops a face from a [CameraImage] based on the provided [boundingBox].
-  static Uint8List? cropFace(CameraImage image, Rect boundingBox, int rotation) {
+  /// [paddingFactor] adds a margin around the face (0.0 to 1.0).
+  static Uint8List? cropFace(CameraImage image, Rect boundingBox, int rotation, {double paddingFactor = 0.0}) {
     try {
       img.Image? convertedImage;
       
       if (image.format.group == ImageFormatGroup.yuv420 || image.format.group == ImageFormatGroup.nv21) {
-        convertedImage = _convertYUV420ToImage(image);
+        convertedImage = convertYUV420ToImage(image);
       } else if (image.format.group == ImageFormatGroup.bgra8888) {
-        convertedImage = _convertBGRA8888ToImage(image);
+        convertedImage = convertBGRA8888ToImage(image);
       }
 
       if (convertedImage == null) {
@@ -29,10 +30,15 @@ class ImageUtils {
         convertedImage = img.copyRotate(convertedImage, angle: 180);
       }
       
-      final x = boundingBox.left.toInt().clamp(0, convertedImage.width);
-      final y = boundingBox.top.toInt().clamp(0, convertedImage.height);
-      final width = boundingBox.width.toInt().clamp(0, convertedImage.width - x);
-      final height = boundingBox.height.toInt().clamp(0, convertedImage.height - y);
+      
+      // Apply dynamic padding
+      double pw = boundingBox.width * paddingFactor;
+      double ph = boundingBox.height * paddingFactor;
+      
+      final x = (boundingBox.left - pw).toInt().clamp(0, convertedImage.width);
+      final y = (boundingBox.top - ph).toInt().clamp(0, convertedImage.height);
+      final width = (boundingBox.width + (pw * 2)).toInt().clamp(0, convertedImage.width - x);
+      final height = (boundingBox.height + (ph * 2)).toInt().clamp(0, convertedImage.height - y);
 
       if (width <= 0 || height <= 0) {
         debugPrint('Invalid crop dimensions: $width x $height');
@@ -47,7 +53,7 @@ class ImageUtils {
     }
   }
 
-  static img.Image _convertYUV420ToImage(CameraImage image) {
+  static img.Image convertYUV420ToImage(CameraImage image) {
     final width = image.width;
     final height = image.height;
     
@@ -101,7 +107,7 @@ class ImageUtils {
     result.setPixelRgb(x, y, r.clamp(0, 255), g.clamp(0, 255), b.clamp(0, 255));
   }
 
-  static img.Image _convertBGRA8888ToImage(CameraImage image) {
+  static img.Image convertBGRA8888ToImage(CameraImage image) {
     return img.Image.fromBytes(
       width: image.width,
       height: image.height,
@@ -114,9 +120,9 @@ class ImageUtils {
   static Uint8List convertedImageToBytes(CameraImage image) {
     img.Image? converted;
     if (image.format.group == ImageFormatGroup.yuv420 || image.format.group == ImageFormatGroup.nv21) {
-      converted = _convertYUV420ToImage(image);
+      converted = convertYUV420ToImage(image);
     } else if (image.format.group == ImageFormatGroup.bgra8888) {
-      converted = _convertBGRA8888ToImage(image);
+      converted = convertBGRA8888ToImage(image);
     }
     
     if (converted == null) return Uint8List(0);

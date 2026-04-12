@@ -22,7 +22,8 @@ class RecognitionScannerTab extends StatefulWidget {
 
 class _RecognitionScannerTabState extends State<RecognitionScannerTab> {
   final List<String> _recentMatches = [];
-  bool _showMesh = true;
+  bool _guidanceEnabled = true;
+  double _cropPadding = 0.2;
 
   void _onFaceRecognized(FaceProfile profile, Uint8List image) {
     final store = context.read<ToolkitStore>();
@@ -72,7 +73,12 @@ class _RecognitionScannerTabState extends State<RecognitionScannerTab> {
                     recognizer: widget.recognizer,
                     profiles: profiles,
                     enableDefaultDialog: false, 
-                    captureOnlyFace: true, // HIGHLIGHT: This now returns high-quality crops
+                    captureOnlyFace: true,
+                    cropPadding: _cropPadding,
+                    guidanceOptions: FaceGuidanceOptions(
+                      enabled: _guidanceEnabled,
+                      stayStillMessage: 'Perfect! Stay still...',
+                    ),
                     dialogOptions: const RecognitionDialogOptions(
                       title: 'IDENTITY CONFIRMED',
                       confirmButtonText: 'CLOSE',
@@ -101,21 +107,87 @@ class _RecognitionScannerTabState extends State<RecognitionScannerTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Live Recognition',
+                'Intelligent Scanner',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               Text(
-                'Running Neural Engines...',
+                'Neural Guidance Active',
                 style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
               ),
             ],
           ),
-          Switch(
-            value: _showMesh,
-            onChanged: (val) => setState(() => _showMesh = val),
-            activeThumbColor: Colors.indigo,
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.settings_overscan, color: _cropPadding > 0 ? Colors.indigo : Colors.grey),
+                onPressed: _showSettingsBottomSheet,
+                tooltip: 'Dynamic Crop Settings',
+              ),
+              Switch(
+                value: _guidanceEnabled,
+                onChanged: (val) => setState(() => _guidanceEnabled = val),
+                activeThumbColor: Colors.indigo,
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _showSettingsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('SDK Showcase Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Dynamic Crop Padding', style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text('${(_cropPadding * 100).toInt()}%', style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              Slider(
+                value: _cropPadding,
+                min: 0.0,
+                max: 1.0,
+                activeColor: Colors.indigo,
+                onChanged: (val) {
+                  setModalState(() => _cropPadding = val);
+                  setState(() => _cropPadding = val);
+                },
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Increases the margin around the detected face in the captured output.',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Apply Configuration'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

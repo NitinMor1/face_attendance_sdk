@@ -1,3 +1,13 @@
+## 1.2.0
+
+- **Real-Time Guidance UI**: Introduced smart biometric enrollment messages (e.g., "Look straight", "Move closer").
+- **Neural Engine Diagnostics**: Added automatic detection for missing/corrupted AI models with actionable UI feedback.
+- **Precision Alignment Engine**: Optimized "Crop-First" strategy to eliminate coordinate drift and improve accuracy.
+- **192D Biometric Distillation**: Calibrated the engine for high-dimensional feature extraction.
+- **BGR Color Support**: Updated neural input processing to support BGR channel order (standard for converted CV2/InsightFace models).
+- **Tuned Security Threshold**: Calibrated standard matching threshold to **0.58** for optimal classroom/office usage.
+- **Documentation Overhaul**: Complete professional README upgrade with technical architecture and implementation guides.
+
 ## 1.1.0
 
 - **Package Rename**: Renamed officially to `face_recognition_kit`.
